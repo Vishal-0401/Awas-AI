@@ -1,0 +1,1278 @@
+/**
+ * AWAS-AI Prisma Schema
+ * 
+ * Production-grade database schema for the AWAS-AI platform.
+ * Supports MySQL with full-text search, spatial indexing, and optimized queries.
+ */
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../dist/generated"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  customer
+  worker
+  admin
+  super_admin
+}
+
+enum UserStatus {
+  pending
+  verified
+  suspended
+  banned
+}
+
+enum WorkerStatus {
+  offline
+  online
+  available
+  busy
+  on_job
+  suspended
+}
+
+enum KYCStatus {
+  pending
+  submitted
+  verified
+  rejected
+  expired
+}
+
+enum JobStatus {
+  requested
+  searching
+  assigned
+  accepted
+  rejected
+  otp_verified
+  arriving
+  started
+  in_progress
+  completed
+  cancelled
+  failed
+  disputed
+}
+
+enum JobPriority {
+  normal
+  urgent
+  emergency
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+  disputed
+}
+
+enum PaymentMethod {
+  upi
+  card
+  netbanking
+  wallet
+  cod
+}
+
+enum PaymentGateway {
+  razorpay
+  stripe
+  paytm
+}
+
+enum EscrowStatus {
+  held
+  released
+  refunded
+  frozen
+}
+
+enum ApplianceType {
+  ac
+  geyser
+  fan
+  washing_machine
+  refrigerator
+  microwave
+  tv
+  other
+}
+
+enum DiagnosticStatus {
+  processing
+  completed
+  failed
+}
+
+enum NotificationType {
+  job_assigned
+  job_status_changed
+  payment_received
+  payment_failed
+  worker_arrived
+  job_completed
+  review_requested
+  promotional
+  system
+  dispute_created
+  kyc_status_changed
+}
+
+enum NotificationChannel {
+  push
+  sms
+  email
+  in_app
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  closed
+  escalated
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+  critical
+}
+
+enum TicketCategory {
+  job_issue
+  payment_issue
+  worker_issue
+  refund
+  other
+}
+
+enum DisputeStatus {
+  raised
+  under_review
+  customer_won
+  worker_won
+  settled
+  rejected
+}
+
+enum DisputeType {
+  incomplete_work
+  overcharging
+  damage_caused
+  no_show
+  misconduct
+  other
+}
+
+enum SubscriptionPlan {
+  basic
+  premium
+  enterprise
+}
+
+enum SubscriptionStatus {
+  active
+  cancelled
+  expired
+  trial
+}
+
+// ============================================================================
+// USER MODELS
+// ============================================================================
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  phone           String    @unique
+  role            UserRole  @default(customer)
+  firstName       String
+  lastName        String
+  profileImage    String?
+  status          UserStatus @default(pending)
+  isEmailVerified Boolean   @default(false)
+  isPhoneVerified Boolean   @default(false)
+  passwordHash    String?
+  lastLoginAt     DateTime?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  customer        Customer?
+  worker          Worker?
+  admin           Admin?
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  reviews         Review[]
+  supportTickets  SupportTicket[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role, status])
+}
+
+model Customer {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  preferredLanguage String   @default("en")
+  loyaltyPoints     Int      @default(0)
+  totalSpent        Decimal  @default(0) @db.Decimal(10, 2)
+  referralCode      String   @unique
+  referredBy        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses         Address[]
+  jobs              Job[]
+  wallet            Wallet?
+  subscription      Subscription?
+  reviews           Review[]
+  loyaltyTxns       LoyaltyTransaction[]
+  referrals         Referral[]
+  predictiveScores  PredictiveMaintenanceScore[]
+  appliances        Appliance[]
+
+  @@index([userId])
+  @@index([referralCode])
+}
+
+model Worker {
+  id              String       @id @default(uuid())
+  userId          String       @unique
+  currentStatus   WorkerStatus @default(offline)
+  rating          Float        @default(0)
+  totalJobs       Int          @default(0)
+  totalEarnings   Decimal      @default(0) @db.Decimal(10, 2)
+  experience      Int          @default(0) // months
+  bio             String?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile         WorkerProfile?
+  wallet          Wallet?
+  jobs            Job[]
+  reviews         Review[]
+  documents       WorkerDocument[]
+  bankAccount     BankAccount?
+  vehicle         WorkerVehicle?
+  serviceAreas    WorkerServiceArea[]
+  shifts          WorkerShift[]
+  inventory       WorkerInventory?
+  trainings       WorkerTraining[]
+  certifications  Certification[]
+  settlements     CommissionSettlement[]
+
+  @@index([userId])
+  @@index([currentStatus])
+  @@index([rating])
+}
+
+model WorkerProfile {
+  id              String   @id @default(uuid())
+  workerId        String   @unique
+  categories      Json     // ServiceCategory[]
+  kycStatus       KYCStatus @default(pending)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  worker          Worker              @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([kycStatus])
+}
+
+model Admin {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  permissions     Json     // Permission[]
+  isSystem        Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resolvedTickets SupportTicket[]
+  resolvedDisputes Dispute[]
+
+  @@index([userId])
+}
+
+// ============================================================================
+// ADDRESS & LOCATION
+// ============================================================================
+
+model Address {
+  id              String   @id @default(uuid())
+  customerId      String
+  type            String   // home, work, other
+  label           String?
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  state           String
+  pincode         String
+  landmark        String?
+  latitude        Float
+  longitude       Float
+  isDefault       Boolean  @default(false)
+  floorNumber     Int?
+  apartmentName   String?
+  gateCode        String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobs            Job[]
+
+  @@index([customerId])
+  @@index([city, pincode])
+  @@index([latitude, longitude])
+}
+
+model WorkerServiceArea {
+  id              String   @id @default(uuid())
+  workerId        String
+  city            String
+  locality        String
+  pincode         String
+  latitude        Float
+  longitude       Float
+  radius          Float    // km
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  worker          Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([city, pincode])
+  @@index([latitude, longitude])
+}
+
+// ============================================================================
+// SERVICE & CATEGORY
+// ============================================================================
+
+model Service {
+  id                  String   @id @default(uuid())
+  name                String
+  category            String   // ServiceCategory
+  description         String
+  basePrice           Decimal  @db.Decimal(10, 2)
+  estimatedDuration   Int      // minutes
+  requiresInspection  Boolean  @default(false)
+  isActive            Boolean  @default(true)
+  metadata            Json?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  jobs                Job[]
+  jobPricings         JobPricing[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+// ============================================================================
+// JOB & BOOKING
+// ============================================================================
+
+model Job {
+  id                  String       @id @default(uuid())
+  jobId               String       @unique // Human readable: AWAS-YYYYMMDD-XXXX
+  customerId          String
+  workerId            String?
+  serviceId           String
+  status              JobStatus    @default(requested)
+  priority            JobPriority  @default(normal)
+  
+  // Location
+  serviceAddressId    String
+  serviceLatitude     Float
+  serviceLongitude    Float
+  
+  // Timing
+  scheduledAt         DateTime?
+  startedAt           DateTime?
+  completedAt         DateTime?
+  estimatedDuration   Int
+  
+  // AI Diagnostics
+  aiDiagnosticId      String?
+  aiConfidenceScore   Float?
+  
+  // OTP
+  otp                 String?
+  otpVerifiedAt       DateTime?
+  
+  // Description
+  problemDescription  String?
+  customerNotes       String?
+  workerNotes         String?
+  
+  // Media
+  images              Json? // JobImage[]
+  beforeImages        Json? // string[]
+  afterImages         Json? // string[]
+  
+  metadata            Json?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Relations
+  customer            Customer     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  worker              Worker?      @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  service             Service      @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  serviceAddress      Address      @relation(fields: [serviceAddressId], references: [id], onDelete: Restrict)
+  aiDiagnostic        AIDiagnostic? @relation(fields: [aiDiagnosticId], references: [id], onDelete: SetNull)
+  tracking            JobTracking[]
+  pricing             JobPricing?
+  payment             Payment?
+  review              Review?
+  
+  @@index([customerId])
+  @@index([workerId])
+  @@index([status])
+  @@index([jobId])
+  @@index([serviceLatitude, serviceLongitude])
+  @@index([createdAt])
+  @@index([scheduledAt])
+}
+
+model JobTracking {
+  id              String     @id @default(uuid())
+  jobId           String
+  status          JobStatus
+  previousStatus  JobStatus
+  changedBy       String
+  changedByRole   String
+  reason          String?
+  metadata        Json?
+  
+  createdAt       DateTime   @default(now())
+
+  // Relations
+  job             Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model JobPricing {
+  id                  String   @id @default(uuid())
+  jobId               String   @unique
+  basePrice           Decimal  @db.Decimal(10, 2)
+  additionalCharges   Decimal  @default(0) @db.Decimal(10, 2)
+  totalAmount         Decimal  @db.Decimal(10, 2)
+  platformFee         Decimal  @db.Decimal(10, 2)
+  taxes               Decimal  @db.Decimal(10, 2)
+  discount            Decimal  @default(0) @db.Decimal(10, 2)
+  finalAmount         Decimal  @db.Decimal(10, 2)
+  workerShare         Decimal  @db.Decimal(10, 2)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  job                 Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
+// ============================================================================
+// AI DIAGNOSTICS
+// ============================================================================
+
+model AIDiagnostic {
+  id                      String         @id @default(uuid())
+  customerId              String
+  applianceType           ApplianceType
+  brand                   String?
+  model                   String?
+  
+  // Images
+  images                  Json // string[]
+  processedImages         Json // string[]
+  
+  // Results
+  status                  DiagnosticStatus @default(processing)
+  detectedIssues          Json? // DetectedIssue[]
+  confidenceScore         Float?
+  recommendedService      String?
+  estimatedCostMin        Decimal? @db.Decimal(10, 2)
+  estimatedCostMax        Decimal? @db.Decimal(10, 2)
+  urgency                 String? // low, medium, high, critical
+  
+  // Predictions
+  predictedFailureProb    Float?
+  remainingUsefulLife     Int? // days
+  
+  // Processing
+  processingTimeMs        Int?
+  modelVersion            String?
+  
+  createdAt               DateTime   @default(now())
+  completedAt             DateTime?
+
+  // Relations
+  job                     Job?
+
+  @@index([customerId])
+  @@index([status])
+  @@index([applianceType])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// PAYMENT & WALLET
+// ============================================================================
+
+model Wallet {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  userRole        UserRole
+  balance         Decimal  @default(0) @db.Decimal(10, 2)
+  pendingBalance  Decimal  @default(0) @db.Decimal(10, 2)
+  totalAdded      Decimal  @default(0) @db.Decimal(10, 2)
+  totalSpent      Decimal  @default(0) @db.Decimal(10, 2)
+  totalEarned     Decimal  @default(0) @db.Decimal(10, 2)
+  totalWithdrawn  Decimal  @default(0) @db.Decimal(10, 2)
+  currency        String   @default("INR")
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  transactions    WalletTransaction[]
+
+  @@index([userId])
+  @@index([userRole])
+}
+
+model WalletTransaction {
+  id              String   @id @default(uuid())
+  walletId        String
+  userId          String
+  type            String   // credit, debit
+  category        String   // payment, refund, add_money, withdrawal, adjustment, incentive
+  amount          Decimal  @db.Decimal(10, 2)
+  balanceBefore   Decimal  @db.Decimal(10, 2)
+  balanceAfter    Decimal  @db.Decimal(10, 2)
+  referenceId     String?
+  description     String
+  metadata        Json?
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  wallet          Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                  String         @id @default(uuid())
+  orderId             String         @unique
+  jobId               String         @unique
+  customerId          String
+  workerId            String
+  amount              Decimal        @db.Decimal(10, 2)
+  platformFee         Decimal        @db.Decimal(10, 2)
+  workerShare         Decimal        @db.Decimal(10, 2)
+  taxes               Decimal        @db.Decimal(10, 2)
+  
+  status              PaymentStatus  @default(pending)
+  method              PaymentMethod?
+  gateway             PaymentGateway?
+  gatewayOrderId      String?
+  gatewayPaymentId    String?
+  
+  // Escrow
+  escrowStatus        EscrowStatus   @default(held)
+  escrowReleasedAt    DateTime?
+  
+  // Settlement
+  settlementId        String?
+  settlementStatus    String         @default("pending") // pending, processed, failed
+  
+  receipt             String?
+  metadata            Json?
+  
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  completedAt         DateTime?
+
+  // Relations
+  job                 Job @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  escrow              EscrowAccount?
+
+  @@index([jobId])
+  @@index([customerId])
+  @@index([workerId])
+  @@index([status])
+  @@index([orderId])
+  @@index([gatewayPaymentId])
+}
+
+model EscrowAccount {
+  id                  String         @id @default(uuid())
+  paymentId           String         @unique
+  jobId               String
+  customerId          String
+  workerId            String
+  amount              Decimal        @db.Decimal(10, 2)
+  status              EscrowStatus   @default(held)
+  
+  releaseConditions   Json // EscrowCondition[]
+  freezeReason        String?
+  
+  heldAt              DateTime   @default(now())
+  releasedAt          DateTime?
+  refundedAt          DateTime?
+
+  @@index([paymentId])
+  @@index([jobId])
+  @@index([status])
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+model Notification {
+  id              String   @id @default(uuid())
+  userId          String
+  userRole        UserRole
+  type            NotificationType
+  title           String
+  message         String
+  
+  // Channels
+  channels        Json // NotificationChannel[]
+  sentChannels    Json? // NotificationChannel[]
+  
+  // Data
+  actionType      String?
+  actionData      Json?
+  
+  // Status
+  isRead          Boolean  @default(false)
+  readAt          DateTime?
+  
+  // Delivery
+  pushNotificationId String?
+  smsMessageId    String?
+  emailMessageId  String?
+  
+  createdAt       DateTime @default(now())
+  sentAt          DateTime?
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([type])
+}
+
+// ============================================================================
+// SUPPORT & DISPUTE
+// ============================================================================
+
+model SupportTicket {
+  id              String         @id @default(uuid())
+  ticketId        String         @unique // Human readable
+  customerId      String
+  jobId           String?
+  workerId        String?
+  category        TicketCategory
+  priority        TicketPriority @default(medium)
+  status          TicketStatus   @default(open)
+  subject         String
+  description     String
+  
+  // Assignment
+  assignedTo      String?
+  assignedAt      DateTime?
+  
+  // Resolution
+  resolution      String?
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  
+  metadata        Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  customer        User @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  admin           Admin? @relation(fields: [resolvedBy], references: [id], onDelete: SetNull)
+  messages        TicketMessage[]
+
+  @@index([customerId])
+  @@index([ticketId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id              String   @id @default(uuid())
+  ticketId        String
+  senderId        String
+  senderRole      String
+  message         String
+  attachments     Json? // string[]
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  ticket          SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model Dispute {
+  id                  String         @id @default(uuid())
+  disputeId           String         @unique // Human readable
+  jobId               String         @unique
+  raisedBy            String
+  raisedByRole        UserRole
+  againstUserId       String
+  againstUserRole     UserRole
+  type                DisputeType
+  status              DisputeStatus  @default(raised)
+  description         String
+  
+  // Evidence
+  evidence            Json? // DisputeEvidence[]
+  
+  // Resolution
+  assignedAdminId     String?
+  resolution          Json? // DisputeResolution
+  
+  // Escrow
+  escrowFrozen        Boolean        @default(false)
+  escrowReleaseDecision String?
+  
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  resolvedAt          DateTime?
+
+  @@index([jobId])
+  @@index([disputeId])
+  @@index([status])
+  @@index([type])
+  @@index([raisedBy])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// REVIEWS & RATINGS
+// ============================================================================
+
+model Review {
+  id                String   @id @default(uuid())
+  jobId             String   @unique
+  customerId        String
+  workerId          String
+  rating            Float
+  qualityRating     Float
+  punctualityRating Float
+  behaviorRating    Float
+  valueRating       Float
+  comment           String?
+  images            Json? // string[]
+  customerRating    Float?
+  customerComment   String?
+  isVerified        Boolean  @default(true)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  job               Job @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  customer          User @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  worker            Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([workerId])
+  @@index([customerId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// PREDICTIVE MAINTENANCE
+// ============================================================================
+
+model PredictiveMaintenanceScore {
+  id                  String   @id @default(uuid())
+  customerId          String
+  applianceId         String?
+  applianceType       ApplianceType
+  brand               String?
+  model               String?
+  
+  // Scores
+  healthScore         Float
+  failureProbability  Float
+  remainingUsefulLife Int // days
+  
+  // Factors
+  age                 Int? // months
+  usageHours          Float?
+  lastServiceDate     DateTime?
+  serviceHistory      Json? // string[]
+  
+  // Predictions
+  predictedIssues     Json? // PredictedIssue[]
+  maintenanceRecs     Json? // MaintenanceRecommendation[]
+  
+  // Alerts
+  alerts              Json? // MaintenanceAlert[]
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([applianceType])
+  @@index([healthScore])
+  @@index([createdAt])
+}
+
+model Appliance {
+  id                  String   @id @default(uuid())
+  customerId          String
+  type                ApplianceType
+  brand               String?
+  model               String?
+  serialNumber        String?
+  purchaseDate        DateTime?
+  installationDate    DateTime?
+  warrantyExpiry      DateTime?
+  notes               String?
+  metadata            Json?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  aiDiagnostics       AIDiagnostic[]
+  predictiveScores    PredictiveMaintenanceScore[]
+
+  @@index([customerId])
+  @@index([type])
+  @@index([brand])
+}
+
+// ============================================================================
+// WORKER MANAGEMENT
+// ============================================================================
+
+model WorkerDocument {
+  id              String     @id @default(uuid())
+  workerId        String
+  type            String // aadhaar, pan, driving_license, voter_id, passport, police_verification, certificate
+  number          String?
+  frontImage      String
+  backImage       String?
+  selfieImage     String?
+  status          KYCStatus  @default(pending)
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  rejectionReason String?
+  expiryDate      DateTime?
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relations
+  worker          Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([type])
+  @@index([status])
+}
+
+model BankAccount {
+  id                  String   @id @default(uuid())
+  workerId            String   @unique
+  accountHolderName   String
+  accountNumber       String
+  ifscCode            String
+  bankName            String
+  branchName          String?
+  accountType         String   @default("savings")
+  isVerified          Boolean  @default(false)
+  verificationMethod  String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  worker              Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([ifscCode])
+}
+
+model WorkerVehicle {
+  id                  String   @id @default(uuid())
+  workerId            String   @unique
+  type                String // bike, scooter, car, auto, cycle
+  registrationNumber  String
+  model               String
+  color               String
+  
+  // Documents
+  insuranceNumber     String?
+  insuranceExpiry     DateTime?
+  pollutionCertificate String?
+  pollutionExpiry     DateTime?
+  
+  // Verification
+  isVerified          Boolean  @default(false)
+  verifiedBy          String?
+  verifiedAt          DateTime?
+  
+  isActive            Boolean  @default(true)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  worker              Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([registrationNumber])
+}
+
+model WorkerShift {
+  id              String   @id @default(uuid())
+  workerId        String
+  date            DateTime @db.Date
+  startTime       String // HH:mm
+  endTime         String // HH:mm
+  status          String   @default("scheduled") // scheduled, active, completed, cancelled
+  breakSlots      Json? // TimeSlot[]
+  assignedAreaId  String?
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  worker          Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([date])
+  @@index([status])
+}
+
+model WorkerInventory {
+  id              String   @id @default(uuid())
+  workerId        String   @unique
+  items           Json // InventoryItem[]
+  
+  lastUpdated     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  worker          Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+}
+
+model WorkerTraining {
+  id              String   @id @default(uuid())
+  workerId        String
+  moduleId        String
+  status          String   @default("not_started") // not_started, in_progress, completed, failed
+  startedAt       DateTime?
+  completedAt     DateTime?
+  score           Float?
+  attempts        Int      @default(0)
+  certificateUrl  String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  worker          Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([moduleId])
+  @@index([status])
+}
+
+model Certification {
+  id              String   @id @default(uuid())
+  workerId        String
+  name            String
+  issuer          String
+  certificateNumber String
+  validFrom       DateTime
+  validUntil      DateTime
+  documentUrl     String
+  isVerified      Boolean  @default(false)
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  worker          Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([certificateNumber])
+}
+
+model CommissionSettlement {
+  id                  String   @id @default(uuid())
+  workerId            String
+  periodStart         DateTime
+  periodEnd           DateTime
+  
+  // Earnings
+  grossEarnings       Decimal  @db.Decimal(10, 2)
+  platformCommission  Decimal  @db.Decimal(10, 2)
+  paymentFees         Decimal  @db.Decimal(10, 2)
+  taxes               Decimal  @db.Decimal(10, 2)
+  bonuses             Decimal  @default(0) @db.Decimal(10, 2)
+  penalties           Decimal  @default(0) @db.Decimal(10, 2)
+  netEarnings         Decimal  @db.Decimal(10, 2)
+  
+  // Settlement
+  status              String   @default("pending") // pending, processing, completed, failed
+  settlementDate      DateTime?
+  settlementReference String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  worker              Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
+}
+
+// ============================================================================
+// SUBSCRIPTION & LOYALTY
+// ============================================================================
+
+model Subscription {
+  id                  String             @id @default(uuid())
+  customerId          String             @unique
+  plan                SubscriptionPlan
+  status              SubscriptionStatus @default(trial)
+  
+  // Pricing
+  monthlyPrice        Decimal            @db.Decimal(10, 2)
+  yearlyPrice         Decimal            @db.Decimal(10, 2)
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  
+  // Features
+  priorityBooking     Boolean            @default(false)
+  discountedRates     Float              @default(0)
+  freeInspections     Int                @default(0)
+  dedicatedSupport    Boolean            @default(false)
+  
+  // Billing
+  billingCycle        String             @default("monthly")
+  nextBillingDate     DateTime
+  paymentMethodId     String?
+  
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  cancelledAt         DateTime?
+
+  // Relations
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([status])
+  @@index([nextBillingDate])
+}
+
+model LoyaltyTransaction {
+  id              String   @id @default(uuid())
+  customerId      String
+  type            String   // earn, redeem, adjust, expire
+  points          Int
+  balanceBefore   Int
+  balanceAfter    Int
+  referenceId     String?
+  description     String
+  expiresAt       DateTime?
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Referral {
+  id                  String   @id @default(uuid())
+  programId           String
+  referrerId          String
+  refereeId           String
+  referralCode        String
+  status              String   @default("pending") // pending, completed, expired
+  bonusPaid           Boolean  @default(false)
+  refereeFirstOrderId String?
+  
+  createdAt           DateTime @default(now())
+  completedAt         DateTime?
+  expiresAt           DateTime
+
+  @@index([referralCode])
+  @@index([referrerId])
+  @@index([refereeId])
+  @@index([status])
+}
+
+// ============================================================================
+// AUDIT & LOGS
+// ============================================================================
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  action          String
+  resourceType    String
+  resourceId      String
+  userId          String
+  userRole        UserRole
+  
+  previousState   Json?
+  newState        Json?
+  changes         Json? // AuditChange[]
+  
+  ipAddress       String?
+  userAgent       String?
+  metadata        Json?
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// SYSTEM CONFIGURATION
+// ============================================================================
+
+model SystemConfig {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  value           Json
+  description     String?
+  category        String?
+  isEncrypted     Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+}
+
+model FeatureFlag {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  description     String?
+  enabled         Boolean  @default(false)
+  percentage      Float?
+  userSegments    Json? // string[]
+  conditions      Json? // FeatureCondition[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([name])
+  @@index([enabled])
+}
+
+// ============================================================================
+// WORKER LOCATION TRACKING (for real-time dispatch)
+// ============================================================================
+
+model WorkerLocation {
+  id              String   @id @default(uuid())
+  workerId        String
+  latitude        Float
+  longitude       Float
+  accuracy        Float
+  speed           Float?
+  heading         Float?
+  batteryLevel    Float?
+  isOnline        Boolean  @default(true)
+  currentStatus   String?
+  jobId           String?
+  
+  timestamp       DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([workerId])
+  @@index([timestamp])
+  @@index([latitude, longitude])
+  
+  // Note: This table should be periodically cleaned up
+  // Consider using TimescaleDB or similar for production
+}

@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  phone     String   @unique
+  name      String
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  bookings  Booking[]
+}
+
+model Worker {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  skills       String
+  rating       Float    @default(0.0)
+  totalJobs    Int      @default(0)
+  isVerified   Boolean  @default(false)
+  availability Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  jobs         Job[]
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  customerId    String
+  serviceType   String
+  status        BookingStatus @default(PENDING)
+  scheduledDate DateTime
+  address       String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  customer      User          @relation(fields: [customerId], references: [id])
+  job           Job?
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  bookingId   String    @unique
+  workerId    String?
+  status      JobStatus @default(ASSIGNED)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  worker      Worker?   @relation(fields: [workerId], references: [id])
+}
+
+enum Role {
+  CUSTOMER
+  WORKER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum JobStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

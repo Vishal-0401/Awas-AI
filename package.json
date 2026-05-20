@@ -1,0 +1,74 @@
+{
+  "name": "awas-ai-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWAS-AI: AI-powered Home Management + Uber-like Worker Dispatch + Predictive Maintenance + Dispute Resolution Ecosystem",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "dev:api-gateway": "npm run dev --workspace=apps/api-gateway",
+    "dev:dispatch": "npm run dev --workspace=apps/dispatch-service",
+    "dev:payment": "npm run dev --workspace=apps/payment-service",
+    "dev:ai": "npm run dev --workspace=apps/ai-service",
+    "dev:telemetry": "npm run dev --workspace=apps/telemetry-service",
+    "dev:notification": "npm run dev --workspace=apps/notification-service",
+    "dev:kyc": "npm run dev --workspace=apps/kyc-service",
+    "dev:job": "npm run dev --workspace=apps/job-service",
+    "dev:support": "npm run dev --workspace=apps/support-service",
+    "dev:admin": "npm run dev --workspace=apps/admin-panel",
+    "docker:build": "docker-compose -f infrastructure/docker/docker-compose.yml build",
+    "docker:up": "docker-compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infrastructure/docker/docker-compose.yml down",
+    "prisma:generate": "npm run prisma:generate --workspace=packages/shared",
+    "prisma:migrate": "npm run prisma:migrate --workspace=packages/shared",
+    "prisma:studio": "npm run prisma:studio --workspace=packages/shared",
+    "seed": "npm run seed --workspace=packages/shared",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.3",
+    "prettier": "^3.0.0",
+    "typescript": "^5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/awas-ai/awas-ai-monorepo.git"
+  },
+  "keywords": [
+    "home-services",
+    "ai-diagnostics",
+    "worker-dispatch",
+    "predictive-maintenance",
+    "ondc",
+    "flutter",
+    "react",
+    "nodejs",
+    "microservices"
+  ],
+  "author": "AWAS-AI Team",
+  "license": "PROPRIETARY"
+}
