@@ -31,7 +31,7 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   const token = authHeader.substring(7);
 
   try {
-    const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
+    const decoded = jwt.verify(token, config.jwtAccessSecret) as JwtPayload;
     req.user = decoded;
     next();
   } catch (error) {

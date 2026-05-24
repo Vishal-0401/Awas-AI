@@ -20,6 +20,9 @@ enum AuthProvider {
   APPLE
 }
 
+
+
+
 enum BookingStatus {
   REQUESTED
   ASSIGNED
@@ -39,7 +42,22 @@ enum TransactionStatus {
   SUCCESS
   FAILED
 }
+model OtpSession {
+  id          String   @id @default(uuid())
+  phone       String
+  otp         String
+  status      String   @default("PENDING") // PENDING, VERIFIED, EXPIRED
+  attempts    Int      @default(0)
 
+  expiresAt   DateTime
+  verifiedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([phone])
+  @@map("otp_sessions")
+}
 model User {
   id               String          @id @default(uuid())
   fullName         String?

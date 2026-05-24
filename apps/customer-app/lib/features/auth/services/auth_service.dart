@@ -22,7 +22,7 @@ class AuthService {
     }
 
     final ApiResponse<Map<String, dynamic>> api = await apiClient.postJson(
-      '/auth/google',
+      'api/v1/auth/google',
       body: {'idToken': idToken},
     );
 
@@ -31,7 +31,7 @@ class AuthService {
 
   Future<void> sendOtp(String phone) async {
     await apiClient.postJson(
-      '/auth/send-otp',
+      '/api/v1/auth/send-otp',
       body: {'phone': phone},
       dataParser: (json) => json as Map<String, dynamic>,
     );
@@ -39,7 +39,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> verifyOtp(String phone, String otp) async {
     final ApiResponse<Map<String, dynamic>> api = await apiClient.postJson(
-      '/auth/verify-otp',
+      '/api/v1/auth/verify-otp',
       body: {
         'phone': phone,
         'otp': otp,

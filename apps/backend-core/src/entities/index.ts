@@ -28,6 +28,17 @@ export interface AddressEntity {
   updatedAt: Date;
 }
 
+export interface OtpSessionEntity {
+  id: string;
+  phone: string;
+  otp: string;
+  status: 'PENDING' | 'VERIFIED' | 'EXPIRED';
+  attempts: number;
+  expiresAt: Date;
+  verifiedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 // Booking Entities
 export interface CategoryEntity {
   id: string;
