@@ -28,11 +28,11 @@ class OnboardingScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                        border: Border.all(color: AppColors.primary!.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
                         boxShadow: [
                           BoxShadow(
                             // ignore: deprecated_member_use
-                            color: AppColors.primary!.withOpacity(0.1),
+                            color: AppColors.primary.withOpacity(0.1),
                             blurRadius: 50,
                             spreadRadius: -10,
                           ),

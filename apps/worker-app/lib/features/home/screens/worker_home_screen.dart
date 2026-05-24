@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_colors.dart';
 import 'worker_dashboard_screen.dart';
 import '../../jobs/screens/worker_jobs_screen.dart';
@@ -14,7 +15,7 @@ class WorkerHomeScreen extends StatefulWidget {
 
 class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   int _currentIndex = 0;
-  
+
   final List<Widget> _screens = [
     const WorkerDashboardScreen(),
     const WorkerJobsScreen(),
@@ -29,42 +30,45 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surface.withOpacity(0.9),
           border: Border(
-            top: BorderSide(color: AppColors.primary!.withOpacity(0.2), width: 1),
+            top: BorderSide(
+              color: AppColors.primaryGold.withOpacity(0.2),
+              width: 1,
+            ),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary!.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.3),
               blurRadius: 20,
-              offset: const Offset(0, -5),
+              offset: Offset(0, -5.h),
             ),
           ],
         ),
         child: NavigationBar(
           backgroundColor: Colors.transparent,
-          indicatorColor: AppColors.primary!.withOpacity(0.2),
+          indicatorColor: AppColors.primaryGold.withOpacity(0.2),
           selectedIndex: _currentIndex,
           onDestinationSelected: (index) => setState(() => _currentIndex = index),
           destinations: [
             NavigationDestination(
               icon: Icon(Icons.dashboard_outlined, color: AppColors.textSecondary),
-              selectedIcon: Icon(Icons.dashboard, color: AppColors.primary),
-              label: 'Dashboard',
+              selectedIcon: Icon(Icons.dashboard, color: AppColors.primaryGold),
+              label: 'Console',
             ),
             NavigationDestination(
               icon: Icon(Icons.work_outline, color: AppColors.textSecondary),
-              selectedIcon: Icon(Icons.work, color: AppColors.primary),
+              selectedIcon: Icon(Icons.work, color: AppColors.primaryGold),
               label: 'Jobs',
             ),
             NavigationDestination(
               icon: Icon(Icons.account_balance_wallet_outlined, color: AppColors.textSecondary),
-              selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primary),
+              selectedIcon: Icon(Icons.account_balance_wallet, color: AppColors.primaryGold),
               label: 'Wallet',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline, color: AppColors.textSecondary),
-              selectedIcon: Icon(Icons.person, color: AppColors.primary),
+              selectedIcon: Icon(Icons.person, color: AppColors.primaryGold),
               label: 'Profile',
             ),
           ],

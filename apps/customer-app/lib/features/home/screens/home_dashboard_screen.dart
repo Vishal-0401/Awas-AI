@@ -1,8 +1,9 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/config/app_theme.dart';
+
 import 'homeowner_home_screen.dart';
 import '../../jobs/screens/orders_screen.dart';
 import '../../wallet/screens/wallet_screen.dart';
@@ -65,7 +66,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         height: 56,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: [AppColors.primary, AppColors.secondary],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,

@@ -1,8 +1,6 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart' show AppColors;
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
-import '../../../core/config/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,19 +10,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _navigateToNext();
-  }
-
-  Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      context.go('/onboarding');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary],
+  colors: [AppColors.primary, AppColors.primaryVariant],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

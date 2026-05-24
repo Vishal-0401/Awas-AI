@@ -1,8 +1,9 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
+
 
 class ApplianceDetailScreen extends StatelessWidget {
   const ApplianceDetailScreen({super.key});
@@ -46,7 +47,7 @@ class ApplianceDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.surfaceGlass,
+                        color: AppColors.surface,
                         border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 2),
                         boxShadow: [
                           BoxShadow(
@@ -128,11 +129,11 @@ class ApplianceDetailScreen extends StatelessWidget {
                             Expanded(
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: LinearProgressIndicator(
+                                child: const LinearProgressIndicator(
                                   value: 0.82,
                                   minHeight: 12,
                                   backgroundColor: Colors.white10,
-                                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.success),
                                 ),
                               ),
                             ),

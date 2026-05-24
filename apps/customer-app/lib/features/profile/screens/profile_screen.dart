@@ -1,203 +1,195 @@
+import 'package:awas_customer_app/core/widgets/glass_card.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:awas_customer_app/core/constants/app_colors.dart';
+import 'package:awas_customer_app/core/constants/app_typography.dart';
+import 'package:awas_customer_app/core/constants/spacing.dart';
 
-import '../../../core/config/app_theme.dart';
-
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Text(
-                'My Profile',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ).animate().fadeIn().slideX(begin: -0.1),
-              
-              const SizedBox(height: 32),
-              
-              // Profile Card
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://i.pravatar.cc/150?img=11'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rahul Sharma',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '+91 98765 43210',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'Premium Member',
-                              style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
-              
-              const SizedBox(height: 48),
-              
-              // Settings List
-              Text(
-                'Account Settings',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ).animate().fadeIn(delay: 300.ms),
-              
-              const SizedBox(height: 16),
-              
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  children: [
-                    _buildSettingsTile(context, Icons.home_work_rounded, 'Saved Addresses', () {}),
-                    _buildDivider(),
-                    _buildSettingsTile(context, Icons.kitchen_rounded, 'My Appliances', () {}),
-                    _buildDivider(),
-                    _buildSettingsTile(context, Icons.notifications_rounded, 'Notifications', () {}),
-                    _buildDivider(),
-                    _buildSettingsTile(context, Icons.security_rounded, 'Privacy & Security', () {}),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
-              
-              const SizedBox(height: 32),
-              
-              Text(
-                'Support & About',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ).animate().fadeIn(delay: 500.ms),
-              
-              const SizedBox(height: 16),
-              
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  children: [
-                    _buildSettingsTile(context, Icons.support_agent_rounded, 'Live Support', () => context.push('/live-support')),
-                    _buildDivider(),
-                    _buildSettingsTile(context, Icons.description_rounded, 'Terms & Conditions', () {}),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
-              
-              const SizedBox(height: 48),
-              
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => context.go('/login'),
-                  icon: const Icon(Icons.logout_rounded, color: AppColors.error),
-                  label: const Text('Log Out', style: TextStyle(color: AppColors.error)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: AppColors.error),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ).animate().fadeIn(delay: 700.ms),
-              
-              const SizedBox(height: 100),
-            ],
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'PROFILE',
+          style: AppTypography.h3.copyWith(
+            color: AppColors.textPrimary,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(AppSpacing.md.r),
+            child: Column(
+              children: [
+                _buildProfileHeader(),
+                SizedBox(height: AppSpacing.lg.h),
+                _buildStats(),
+                SizedBox(height: AppSpacing.lg.h),
+                _buildMenu(),
+                SizedBox(height: AppSpacing.xxl.h),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSettingsTile(BuildContext context, IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: AppColors.textSecondary, size: 20),
+  Widget _buildProfileHeader() {
+    return GlassCard(
+      padding: EdgeInsets.all(AppSpacing.lg.r),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 80.r,
+                height: 80.r,
+                decoration: const BoxDecoration(
+                  color: AppColors.surfaceHighlight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.person, color: AppColors.primary, size: 40.r),
+              ),
+              Container(
+                width: 28.r,
+                height: 28.r,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.background, width: 2),
+                ),
+                child: Icon(Icons.edit, color: AppColors.background, size: 14.r),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.md.h),
+          Text(
+            'Vishal Kumar',
+            style: AppTypography.h3.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            '+91 98765 43210',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'vishal@example.com',
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ],
       ),
-      title: Text(
-        title,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+    ).animate().fadeIn();
+  }
+
+  Widget _buildStats() {
+    final stats = [
+      {'label': 'Total Bookings', 'value': '127'},
+      {'label': 'Favorites', 'value': '8'},
+      {'label': 'Reviews', 'value': '4.8'},
+    ];
+
+    return GlassCard(
+      padding: EdgeInsets.all(AppSpacing.md.r),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: stats.asMap().map((index, stat) {
+          return MapEntry(
+            index,
+            Column(
+              children: [
+                Text(
+                  stat['value']!,
+                  style: AppTypography.h3.copyWith(
+                    color: AppColors.primary,
+                  ),
+                ),
+                Text(
+                  stat['label']!,
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ).animate().scale(delay: (index * 100).ms),
+          );
+        }).values.toList(),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textSecondary, size: 16),
     );
   }
 
-  Widget _buildDivider() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 24.0),
-      child: Divider(color: Colors.white10, height: 1),
+  Widget _buildMenu() {
+    final menuItems = [
+      {'icon': Icons.home, 'label': 'My Home', 'route': '/dashboard'},
+      {'icon': Icons.history, 'label': 'Booking History', 'route': null},
+      {'icon': Icons.favorite, 'label': 'Favorite Workers', 'route': null},
+      {'icon': Icons.payment, 'label': 'Payment Methods', 'route': null},
+      {'icon': Icons.card_giftcard, 'label': 'Rewards', 'route': null},
+      {'icon': Icons.support_agent, 'label': 'Support', 'route': null},
+      {'icon': Icons.settings, 'label': 'Settings', 'route': null},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ACCOUNT',
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textSecondary,
+            letterSpacing: 1.5,
+          ),
+        ),
+        SizedBox(height: AppSpacing.md.h),
+        GlassCard(
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.xs.h),
+          child: Column(
+            children: menuItems.asMap().map((index, item) {
+              return MapEntry(
+                index,
+                ListTile(
+                  leading: Icon(item['icon'] as IconData, color: AppColors.primary),
+                  title: Text(
+                    item['label'] as String,
+                    style: AppTypography.bodyMedium,
+                  ),
+                  trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20.r),
+                  onTap: () {
+                    if (item['route'] != null) {
+                      // Navigator.pushNamed(context, item['route'] as String);
+                    }
+                  },
+                ).animate().slideX(begin: -0.1, delay: (index * 50).ms),
+              );
+            }).values.toList(),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -86,7 +86,7 @@ class WorkerJobsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Divider(color: AppColors.borders),
+                 Divider(color: AppColors.borders),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

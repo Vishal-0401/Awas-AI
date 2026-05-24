@@ -1,8 +1,8 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
 
 class HomeownerHomeScreen extends StatelessWidget {
   const HomeownerHomeScreen({super.key});
@@ -26,7 +26,7 @@ class HomeownerHomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.secondary],
+                      colors: [AppColors.primary, AppColors.primaryVariant],
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -319,7 +319,7 @@ class HomeownerHomeScreen extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      const CircularProgressIndicator(value: 0.87, strokeWidth: 8, backgroundColor: AppColors.surfaceGlass, valueColor: AlwaysStoppedAnimation<Color>(AppColors.success)),
+                      const CircularProgressIndicator(value: 0.87, strokeWidth: 8, backgroundColor: AppColors.surface, valueColor: AlwaysStoppedAnimation<Color>(AppColors.success)),
                       Center(child: Icon(Icons.home_rounded, size: 32, color: AppColors.success.withOpacity(0.8))),
                     ],
                   ),

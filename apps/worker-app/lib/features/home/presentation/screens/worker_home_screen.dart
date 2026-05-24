@@ -59,7 +59,7 @@ class WorkerHomeScreen extends ConsumerWidget {
                         Switch(
                           value: isOnline,
                           onChanged: (_) => ref.read(telemetryProvider.notifier).toggleStatus(),
-                          activeColor: AppColors.accentCyan,
+                          activeThumbColor: AppColors.accentCyan,
                           activeTrackColor: AppColors.accentCyan.withOpacity(0.3),
                           inactiveThumbColor: AppColors.textSecondary,
                           inactiveTrackColor: AppColors.borders,

@@ -59,6 +59,7 @@ dependencies:
   gap: ^3.0.1
   lottie: ^2.7.0
   shimmer: ^3.0.0
+  flutter_animate: ^2.0.0
 
 dev_dependencies:
   flutter_test:

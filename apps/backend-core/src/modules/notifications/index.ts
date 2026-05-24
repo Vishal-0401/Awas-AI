@@ -1,11 +1,8 @@
-import { Router } from 'express';
-import { NotificationController } from './notifications.controller';
-import { authGuard } from '../../common/guards/auth.guard';
+import { notificationRoutes } from './notification.routes';
 
-const router = Router();
-const notificationController = new NotificationController();
+export * from './notification.routes';
+export * from './notification.controller';
+export * from './notification.service';
+export * from './notification.repository';
 
-router.get('/', authGuard, notificationController.getNotifications);
-router.put('/:id/read', authGuard, notificationController.markAsRead);
-
-export default router;
+export default notificationRoutes;

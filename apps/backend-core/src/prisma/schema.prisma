@@ -7,81 +7,291 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  phone     String   @unique
-  name      String
-  password  String
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  bookings  Booking[]
-}
-
-model Worker {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  skills       String
-  rating       Float    @default(0.0)
-  totalJobs    Int      @default(0)
-  isVerified   Boolean  @default(false)
-  availability Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  jobs         Job[]
-}
-
-model Booking {
-  id            String        @id @default(uuid())
-  customerId    String
-  serviceType   String
-  status        BookingStatus @default(PENDING)
-  scheduledDate DateTime
-  address       String
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relations
-  customer      User          @relation(fields: [customerId], references: [id])
-  job           Job?
-}
-
-model Job {
-  id          String    @id @default(uuid())
-  bookingId   String    @unique
-  workerId    String?
-  status      JobStatus @default(ASSIGNED)
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  booking     Booking   @relation(fields: [bookingId], references: [id])
-  worker      Worker?   @relation(fields: [workerId], references: [id])
-}
-
 enum Role {
   CUSTOMER
   WORKER
   ADMIN
+  SUPPORT
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  APPLE
 }
 
 enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
+  REQUESTED
+  ASSIGNED
+  ARRIVING
+  STARTED
   COMPLETED
+  CANCELLED
 }
 
-enum JobStatus {
-  ASSIGNED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id               String          @id @default(uuid())
+  fullName         String?
+  email            String?         @unique
+  phone            String?         @unique
+  avatar           String?
+  googleId         String?         @unique
+  authProvider     AuthProvider    @default(LOCAL)
+  role             Role            @default(CUSTOMER)
+  isVerified       Boolean         @default(false)
+  
+  // Relations
+  addresses        Address[]
+  bookings         Booking[]       @relation("CustomerBookings")
+  workerJobs       Job[]           @relation("WorkerJobs")
+  wallet           Wallet?
+  notifications    Notification[]
+  reviews          Review[]
+  supportTickets   SupportTicket[]
+  aiDiagnostics    AiDiagnostic[]
+  applianceAssets  ApplianceAsset[]
+  refreshTokens    RefreshToken[]
+  auditLogs        AuditLog[]
+  
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   // e.g., Home, Work
+  address   String
+  city      String
+  state     String
+  zipCode   String
+  latitude  Float?
+  longitude Float?
+  isDefault Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  bookings  Booking[]
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  icon        String?
+  services    Service[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Service {
+  id          String    @id @default(uuid())
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  basePrice   Float
+  icon        String?
+  
+  bookings    Booking[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  customerId      String
+  customer        User          @relation("CustomerBookings", fields: [customerId], references: [id])
+  serviceId       String
+  service         Service       @relation(fields: [serviceId], references: [id])
+  addressId       String
+  address         Address       @relation(fields: [addressId], references: [id])
+  
+  status          BookingStatus @default(REQUESTED)
+  scheduledFor    DateTime
+  totalAmount     Float
+  notes           String?
+  
+  job             Job?
+  review          Review?
+  transactions    Transaction[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Job {
+  id          String        @id @default(uuid())
+  bookingId   String        @unique
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+  workerId    String?
+  worker      User?         @relation("WorkerJobs", fields: [workerId], references: [id])
+  
+  status      BookingStatus @default(REQUESTED)
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  tracking    JobTracking?
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model JobTracking {
+  id        String   @id @default(uuid())
+  jobId     String   @unique
+  job       Job      @relation(fields: [jobId], references: [id])
+  latitude  Float
+  longitude Float
+  heading   Float?
+  speed     Float?
+  
+  updatedAt DateTime @updatedAt
+}
+
+model Wallet {
+  id          String        @id @default(uuid())
+  userId      String        @unique
+  user        User          @relation(fields: [userId], references: [id])
+  balance     Float         @default(0.0)
+  
+  transactions Transaction[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  walletId  String
+  wallet    Wallet            @relation(fields: [walletId], references: [id])
+  bookingId String?
+  booking   Booking?          @relation(fields: [bookingId], references: [id])
+  amount    Float
+  type      TransactionType
+  status    TransactionStatus @default(PENDING)
+  reference String?
+  notes     String?
+  
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   // INFO, WARNING, ALERT
+  isRead    Boolean  @default(false)
+  data      Json?
+  
+  createdAt DateTime @default(now())
+}
+
+model ApplianceAsset {
+  id           String             @id @default(uuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id])
+  type         String             // AC, Fridge, etc.
+  brand        String?
+  modelNumber  String?
+  serialNumber String?
+  installDate  DateTime?
+  
+  diagnostics  AiDiagnostic[]
+  scores       PredictiveScore[]
+  
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model AiDiagnostic {
+  id               String          @id @default(uuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id])
+  applianceAssetId String?
+  applianceAsset   ApplianceAsset? @relation(fields: [applianceAssetId], references: [id])
+  
+  imageUrl         String?
+  ocrRawText       String?         @db.Text
+  analysisResult   Json?
+  healthScore      Int?
+  
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model PredictiveScore {
+  id               String         @id @default(uuid())
+  applianceAssetId String
+  applianceAsset   ApplianceAsset @relation(fields: [applianceAssetId], references: [id])
+  
+  overallScore     Int
+  failureRisk      String         // LOW, MEDIUM, HIGH
+  estimatedDaysLeft Int?
+  
+  createdAt        DateTime       @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  rating    Int
+  comment   String?  @db.Text
+  
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  subject   String
+  message   String   @db.Text
+  status    String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  resource  String
+  details   Json?
+  ipAddress String?
+  
+  createdAt DateTime @default(now())
 }

@@ -48,7 +48,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.primary!.withOpacity(0.5)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -63,7 +63,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primary!.withOpacity(0.2),
+              color: AppColors.primary.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text('IN PROGRESS', style: AppTypography.bodyMedium.copyWith(color: AppColors.primary)),

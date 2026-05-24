@@ -1,8 +1,8 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
 
 class NearbyWorkersScreen extends StatefulWidget {
   const NearbyWorkersScreen({super.key});
@@ -263,7 +263,7 @@ class _NearbyWorkersScreenState
       decoration: BoxDecoration(
         color: isSelected
             ? AppColors.primary.withOpacity(0.2)
-            : AppColors.surfaceGlass,
+            : AppColors.surface,
         borderRadius:
             BorderRadius.circular(20),
         border: Border.all(
@@ -290,10 +290,10 @@ class _NearbyWorkersScreenState
   Widget _buildSearchingState() {
     return Container(
       padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius:
-            const BorderRadius.vertical(
+            BorderRadius.vertical(
           top: Radius.circular(32),
         ),
       ),
@@ -357,10 +357,10 @@ class _NearbyWorkersScreenState
   Widget _buildWorkerList() {
     return Container(
       height: 380,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.background,
         borderRadius:
-            const BorderRadius.vertical(
+            BorderRadius.vertical(
           top: Radius.circular(32),
         ),
       ),

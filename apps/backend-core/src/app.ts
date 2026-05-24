@@ -1,24 +1,28 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
 import dotenv from 'dotenv';
+import express, { Application } from 'express';
+import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import yamljs from 'yamljs';
 import { rateLimiter } from './common/middleware';
 import { errorHandler } from './common/middleware/error.middleware';
+import aiRoutes from './modules/ai';
+import trackingRoutes from './modules/tracking';
+import adminRoutes from './modules/admin';
 import authRoutes from './modules/auth';
-import userRoutes from './modules/users';
-import workerRoutes from './modules/workers';
 import bookingRoutes from './modules/bookings';
 import jobRoutes from './modules/jobs';
-import walletRoutes from './modules/wallet';
-import paymentRoutes from './modules/payments';
 import notificationRoutes from './modules/notifications';
+import paymentRoutes from './modules/payments';
 import supportRoutes from './modules/support';
 import telemetryRoutes from './modules/telemetry';
-import adminRoutes from './modules/admin';
+import userRoutes from './modules/users';
+import walletRoutes from './modules/wallet';
+import workerRoutes from './modules/workers';
+import { healthRoutes } from './routes/health.routes';
 
 dotenv.config();
+
 
 const app: Application = express();
 
@@ -34,13 +38,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(rateLimiter);
 
 // Health Check
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Backend Core Service is running.',
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use('/health', healthRoutes);
 
 // Swagger Documentation
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -56,7 +54,10 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/support', supportRoutes);
 app.use('/api/v1/telemetry', telemetryRoutes);
+app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/tracking', trackingRoutes);
 app.use('/api/v1/admin', adminRoutes);
+
 
 // Global Error Handler
 app.use(errorHandler);

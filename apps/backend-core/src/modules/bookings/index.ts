@@ -1,14 +1,8 @@
-import { Router } from 'express';
-import { BookingController } from './bookings.controller';
-import { authGuard, roleGuard } from '../../common/guards/auth.guard';
-import { Role } from '@prisma/client';
+import { bookingRoutes } from './booking.routes';
 
-const router = Router();
-const bookingController = new BookingController();
+export * from './booking.routes';
+export * from './booking.controller';
+export * from './booking.service';
+export * from './booking.repository';
 
-router.post('/', authGuard, roleGuard(Role.CUSTOMER), bookingController.createBooking);
-router.get('/', authGuard, bookingController.getBookings);
-router.get('/:id', authGuard, bookingController.getBooking);
-router.put('/:id', authGuard, bookingController.updateBooking);
-
-export default router;
+export default bookingRoutes;

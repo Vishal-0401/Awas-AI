@@ -1,17 +1,17 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 
-import '../../../core/config/app_theme.dart';
-
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
@@ -46,7 +46,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/login');
+      ref.read(authProvider.notifier).completeOnboarding();
     }
   }
 
@@ -79,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           height: 200,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.surfaceGlass,
+                            color: AppColors.surface,
                             border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 2),
                             boxShadow: [
                               BoxShadow(
@@ -140,7 +140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index ? AppColors.primary : AppColors.surfaceGlass,
+                          color: _currentPage == index ? AppColors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(4),
                           boxShadow: _currentPage == index
                               ? [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 8)]

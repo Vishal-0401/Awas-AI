@@ -1,11 +1,8 @@
-import { Router } from 'express';
-import { WalletController } from './wallet.controller';
-import { authGuard } from '../../common/guards/auth.guard';
+import { walletRoutes } from './wallet.routes';
 
-const router = Router();
-const walletController = new WalletController();
+export * from './wallet.routes';
+export * from './wallet.controller';
+export * from './wallet.service';
+export * from './wallet.repository';
 
-router.get('/', authGuard, walletController.getWallet);
-router.get('/transactions', authGuard, walletController.getTransactions);
-
-export default router;
+export default walletRoutes;

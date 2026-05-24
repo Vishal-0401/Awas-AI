@@ -1,8 +1,8 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
 
 class WorkerProfileScreen extends StatelessWidget {
   const WorkerProfileScreen({super.key});
@@ -27,8 +27,8 @@ class WorkerProfileScreen extends StatelessWidget {
                 children: [
                   Container(
                     color: AppColors.background,
-                    child: Center(
-                      child: const CircleAvatar(
+                    child: const Center(
+                      child: CircleAvatar(
                         radius: 60,
                         backgroundColor: AppColors.primary,
                         child: Icon(Icons.person, size: 60, color: Colors.white),

@@ -1,8 +1,8 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
 
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
@@ -107,10 +107,10 @@ class OrdersScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 16.0),
                   child: Divider(color: Colors.white10),
                 ),
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         CircleAvatar(
                           radius: 16,
@@ -121,7 +121,7 @@ class OrdersScreen extends StatelessWidget {
                         Text('Amit Kumar', style: TextStyle(color: Colors.white)),
                       ],
                     ),
-                    const Text('Track Live', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    Text('Track Live', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],

@@ -70,5 +70,8 @@
     "microservices"
   ],
   "author": "AWAS-AI Team",
-  "license": "PROPRIETARY"
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "redis": "^5.12.1"
+  }
 }

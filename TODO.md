@@ -1,17 +1,43 @@
-# TODO - worker-app Flutter Web enablement
+# TODO.md
 
-## Step 1
-Inspect `apps/worker-app/pubspec.yaml` and verify declared asset/font paths.
+## Authentication system (Firebase Phone OTP + Password login)
 
-## Step 2
-Quick-fix: remove/adjust missing asset + font entries in `apps/worker-app/pubspec.yaml` so Flutter web compile can proceed.
+### Backend (apps/backend-core)
+- [ ] Update `apps/backend-core/src/prisma/schema.prisma`:
+  - [ ] add `passwordHash` and `lastLoginAt` to `User`
+  - [ ] add `OtpSession` model for `otp_sessions`
+- [ ] Implement Firebase Admin support:
+  - [ ] create `apps/backend-core/src/modules/auth/firebase.service.ts`
+- [ ] Implement OTP session service:
+  - [ ] create `apps/backend-core/src/modules/auth/otp.service.ts`
+- [ ] Replace mock OTP in `apps/backend-core/src/modules/auth/auth.service.ts` with real Flow A:
+  - [ ] `POST /auth/send-otp` creates otp session + rate limits
+  - [ ] `POST /auth/verify-otp` verifies `{ phone, verificationId, smsCode }` using Firebase Admin
+  - [ ] checks user existence and returns profileIncomplete vs authenticated
+- [ ] Add endpoints:
+  - [ ] `POST /auth/complete-profile`
+  - [ ] `POST /auth/login` (bcrypt)
+- [ ] Update controllers + routes + validators:
+  - [ ] add new Zod schemas for verify/login/complete-profile payloads
+  - [ ] update `auth.controller.ts` + `auth.routes.ts`
 
-## Step 3
-Run `flutter pub get` inside `apps/worker-app`.
+### Flutter (apps/customer-app)
+- [ ] Add Firebase Phone Auth integration (phone->verificationId->smsCode)
+- [ ] Update `OtpScreen` to call backend verify endpoint with `{ phone, verificationId, smsCode }`
+- [ ] Implement resend code logic
+- [ ] Add `CompleteProfileScreen` + connect to `/auth/complete-profile`
+- [ ] Add `PasswordLoginScreen` + connect to `/auth/login`
+- [ ] Update `AuthService` + `AuthNotifier` for:
+  - [ ] profileIncomplete handling
+  - [ ] token persistence + refresh
+  - [ ] logout
+- [ ] Update routing (route_paths/routes/router)
 
-## Step 4
-Run `flutter run -d web-server` and verify compilation errors.
-
-## Step 5
-If remaining web build errors persist (e.g., firebase_messaging_web / image_cropper_for_web), align dependency versions and/or apply platform guards.
+### End-to-end validation
+- [ ] Run Prisma migrate
+- [ ] Start backend and test:
+  - [ ] OTP login for new user -> complete profile -> JWT issued
+  - [ ] OTP login for existing user -> JWT issued
+  - [ ] Password login works
+- [ ] Start Flutter and test same end-to-end flows
 

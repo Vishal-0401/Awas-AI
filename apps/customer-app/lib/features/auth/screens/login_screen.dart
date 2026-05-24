@@ -1,19 +1,23 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../core/config/app_theme.dart';
+import '../../../core/config/route_paths.dart';
+import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
 
   @override
   void dispose() {
@@ -21,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() async {
+  void _handlePhoneLogin() async {
     if (_phoneController.text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -34,12 +38,40 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     
-    // Simulate network request
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
-      context.push('/otp');
+    try {
+      await ref.read(authProvider.notifier).sendOtp(_phoneController.text);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        context.push(RoutePaths.otp);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        // Prefer clean message; ApiException.toString() may include extra info.
+        final msg = e is Exception ? e.toString() : 'Request failed';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: AppColors.error),
+        );
+      }
+    }
+
+  }
+
+  void _handleGoogleLogin() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      await ref.read(authProvider.notifier).loginWithGoogle();
+      // Navigation is handled by GoRouter's redirect based on authState
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
@@ -59,12 +91,12 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceGlass,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.primary.withOpacity(0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.cyanGlow,
+                       color: AppColors.primary.withOpacity(0.3),
                       blurRadius: 30,
                     ),
                   ],
@@ -139,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
+                  onPressed: _isLoading || _isGoogleLoading ? null : _handlePhoneLogin,
                   child: _isLoading
                       ? const SizedBox(
                           height: 24,
@@ -155,6 +187,39 @@ class _LoginScreenState extends State<LoginScreen> {
               
               const SizedBox(height: 24),
               
+              // Divider
+              const Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.white24)),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('OR', style: TextStyle(color: AppColors.textSecondary)),
+                  ),
+                  Expanded(child: Divider(color: Colors.white24)),
+                ],
+              ).animate().fadeIn(delay: 900.ms),
+              
+              const SizedBox(height: 24),
+              
+              // Google Login Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading || _isGoogleLoading ? null : _handleGoogleLogin,
+                  icon: _isGoogleLoading 
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.g_mobiledata_rounded, size: 32, color: Colors.white),
+                  label: const Text('Continue with Google', style: TextStyle(fontSize: 16, color: Colors.white)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
+
+              const SizedBox(height: 32),
+              
               // Terms & Conditions
               Center(
                 child: Text(
@@ -164,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-              ).animate().fadeIn(delay: 1000.ms),
+              ).animate().fadeIn(delay: 1100.ms),
             ],
           ),
         ),

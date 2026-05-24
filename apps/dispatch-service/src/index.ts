@@ -12,10 +12,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from '@awas-ai/config';
 import { logger } from './utils/logger';
-import { RedisService } from './services/redis.service';
-import { DispatchEngine } from './services/dispatch.engine';
-import { setupSocketHandlers } from './socket/handlers';
 
+import { DispatchEngine } from './services/dispatch.engine';// Mock socket handlers until the module is created
+const setupSocketHandlers = (io: Server) => {
+  logger.info('Setting up socket handlers...');
+};
 const app = express();
 const server = createServer(app);
 
@@ -57,7 +58,54 @@ app.get('/metrics', (req, res) => {
 async function bootstrap() {
   try {
     // Initialize Redis
-    await RedisService.getInstance().connect();
+    async function bootstrap() {
+  try {
+    // Initialize Redis
+    RedisService.getInstance();
+    logger.info('Redis initialized');
+
+    // Initialize dispatch engine
+    await DispatchEngine.initialize();
+    logger.info('Dispatch engine initialized');
+
+    // Setup Socket.io handlers
+    setupSocketHandlers(io);
+    logger.info('Socket.io handlers configured');
+
+    // Start server
+    const port = config.PORT || 3001;
+
+    server.listen(port, '0.0.0.0', () => {
+      logger.info(`Dispatch service listening on port ${port}`);
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+      logger.info('SIGTERM received, shutting down gracefully');
+
+      server.close(async () => {
+        try {
+          const redis = RedisService.getInstance();
+
+          if (redis?.disconnect) {
+            await redis.disconnect();
+          }
+
+          logger.info('Redis disconnected');
+        } catch (error) {
+          logger.error('Redis shutdown error', error);
+        }
+
+        process.exit(0);
+      });
+    });
+
+  } catch (error) {
+    logger.error('Failed to bootstrap dispatch service', error);
+    process.exit(1);
+  }
+}
+
     logger.info('Redis connected successfully');
 
     // Initialize dispatch engine

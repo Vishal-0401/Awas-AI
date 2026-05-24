@@ -1,13 +1,8 @@
-import { Router } from 'express';
-import { UserController } from './users.controller';
-import { authGuard } from '../../common/guards/auth.guard';
-import { validate } from '../../common/middleware/validate.middleware';
-import { updateWorkerSchema } from '../../common/validators/schemas';
+import { userRoutes } from './user.routes';
 
-const router = Router();
-const userController = new UserController();
+export * from './user.routes';
+export * from './user.controller';
+export * from './user.service';
+export * from './user.repository';
 
-router.get('/me', authGuard, userController.getProfile);
-router.put('/me', authGuard, userController.updateProfile);
-
-export default router;
+export default userRoutes;

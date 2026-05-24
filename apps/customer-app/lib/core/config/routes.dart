@@ -1,3 +1,4 @@
+import 'package:awas_customer_app/features/profile/screens/profile_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,7 +11,6 @@ import '../../features/home/screens/homeowner_home_screen.dart';
 import '../../features/home/screens/home_dashboard_screen.dart';
 import '../../features/home/screens/appliance_detail_screen.dart';
 import '../../features/home/screens/predictive_alert_screen.dart';
-import '../../features/home/screens/smart_home_twin_screen.dart';
 
 import '../../features/ai_scanner/screens/ai_scanner_screen.dart';
 import '../../features/ai_scanner/screens/diagnostic_result_screen.dart';
@@ -31,7 +31,6 @@ import '../../features/wallet/screens/transactions_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/settings_screen.dart';
 import '../../features/profile/screens/saved_addresses_screen.dart';
-import '../../features/profile/screens/live_support_screen.dart';
 
 import '../../features/notifications/screens/notifications_screen.dart';
 
@@ -146,6 +145,10 @@ class AppRouter {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+        GoRoute(
+        path: '/profile-setup',
+        builder: (context, state) => const ProfileSetupScreen(),
       ),
       GoRoute(
         path: '/settings',

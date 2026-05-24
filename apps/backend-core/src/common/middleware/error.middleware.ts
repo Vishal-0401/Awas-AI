@@ -1,7 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { logger } from './logger';
+import { NextFunction, Request, Response } from 'express';
+import logger from './logger';
 
 export class AppError extends Error {
+
+
   statusCode: number;
   isOperational: boolean;
 
@@ -24,9 +26,16 @@ export const errorHandler = (
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
+  // Standardized JSON error schema
   res.status(statusCode).json({
-    status: 'error',
+    success: false,
     message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    error: {
+      code: statusCode,
+      details:
+        process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    },
   });
 };
+
+

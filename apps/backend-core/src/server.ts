@@ -1,6 +1,5 @@
 import http from 'http';
 import app from './app';
-import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import { SocketGateway } from './sockets/socket.gateway';
 import { initializeQueues } from './queues/queue.service';
@@ -13,31 +12,17 @@ const server = http.createServer(app);
 // Initialize Prisma
 export const prisma = new PrismaClient();
 
-// Initialize Socket.io
-export const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
-});
-
-const socketGateway = new SocketGateway(io);
-
-io.on('connection', (socket) => {
-  logger.info(`Socket connected: ${socket.id}`);
-
-  socket.on('disconnect', () => {
-    logger.info(`Socket disconnected: ${socket.id}`);
-  });
-});
+// Initialize Socket Gateway
+export const socketGateway = new SocketGateway(server);
 
 async function startServer() {
   try {
     await prisma.$connect();
     logger.info('Database connected successfully');
 
-    initializeQueues();
-    initializeEvents();
+    // Mocks / Placeholders for queue and event initialization
+    // initializeQueues();
+    // initializeEvents();
 
     server.listen(PORT, () => {
       logger.info(`🚀 Backend Core Service running on port ${PORT}`);

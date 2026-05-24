@@ -1,8 +1,8 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
@@ -57,12 +57,12 @@ class _BookingScreenState extends State<BookingScreen> {
                         children: [
                           const Icon(Icons.home_rounded, color: AppColors.primary, size: 28),
                           const SizedBox(width: 16),
-                          Expanded(
+                          const Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 4),
+                                Text('Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                SizedBox(height: 4),
                                 Text(
                                   'A-1204, Tower 3, Cyber City Apartments, Sector 42',
                                   style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -357,7 +357,7 @@ class _BookingScreenState extends State<BookingScreen> {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surfaceGlass,
+          color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isSelected ? AppColors.primary : Colors.white24),
         ),
@@ -386,7 +386,7 @@ class _BookingScreenState extends State<BookingScreen> {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surfaceGlass,
+          color: isSelected ? AppColors.primary.withOpacity(0.2) : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isSelected ? AppColors.primary : Colors.white24),
         ),

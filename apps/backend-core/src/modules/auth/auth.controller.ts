@@ -1,114 +1,66 @@
 import { Request, Response } from 'express';
-import { prisma } from '../../server';
-import { hashPassword, comparePassword, generateToken, generateRefreshToken } from '../../common/utils/auth.utils';
+import { AuthService } from './auth.service';
 import { logger } from '../../common/helpers/logger';
+import { ApiResponse } from '../../common/helpers/response';
+import { googleLoginSchema, sendOtpSchema, verifyOtpSchema, refreshTokenSchema } from '../../validators';
 
 export class AuthController {
-  async register(req: Request, res: Response) {
+  private authService = new AuthService();
+
+  googleLogin = async (req: Request, res: Response) => {
     try {
-      const { email, phone, name, password, role } = req.body;
-
-      const hashedPassword = await hashPassword(password);
-
-      const user = await prisma.user.create({
-        data: {
-          email,
-          phone,
-          name,
-          password: hashedPassword,
-          role: role || 'CUSTOMER',
-        },
-      });
-
-      const token = generateToken(user.id, user.role);
-      const refreshToken = generateRefreshToken(user.id, user.role);
-
-      return res.status(201).json({
-        status: 'success',
-        message: 'User registered successfully',
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-          },
-          token,
-          refreshToken,
-        },
-      });
-    } catch (error) {
-      logger.error('Registration error:', error);
-      return res.status(500).json({
-        status: 'error',
-        message: 'Registration failed',
-      });
+      const { idToken } = googleLoginSchema.parse(req.body);
+      const result = await this.authService.googleLogin(idToken);
+      return ApiResponse.success(res, 'Google login successful', result);
+    } catch (error: any) {
+      logger.error('Google login error:', error);
+      return ApiResponse.error(res, error.message || 'Invalid request', error.errors || []);
     }
-  }
+  };
 
-  async login(req: Request, res: Response) {
+  sendOtp = async (req: Request, res: Response) => {
     try {
-      const { emailOrPhone, password } = req.body;
-
-      const user = await prisma.user.findFirst({
-        where: {
-          OR: [{ email: emailOrPhone }, { phone: emailOrPhone }],
-        },
-      });
-
-      if (!user) {
-        return res.status(401).json({
-          status: 'error',
-          message: 'Invalid credentials',
-        });
-      }
-
-      const isValid = await comparePassword(password, user.password);
-
-      if (!isValid) {
-        return res.status(401).json({
-          status: 'error',
-          message: 'Invalid credentials',
-        });
-      }
-
-      const token = generateToken(user.id, user.role);
-      const refreshToken = generateRefreshToken(user.id, user.role);
-
-      return res.status(200).json({
-        status: 'success',
-        message: 'Login successful',
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-          },
-          token,
-          refreshToken,
-        },
-      });
-    } catch (error) {
-      logger.error('Login error:', error);
-      return res.status(500).json({
-        status: 'error',
-        message: 'Login failed',
-      });
+      const { phone } = sendOtpSchema.parse(req.body);
+      const result = await this.authService.sendOtp(phone);
+      return ApiResponse.success(res, 'OTP sent successfully', result);
+    } catch (error: any) {
+      logger.error('Send OTP error:', error);
+      return ApiResponse.error(res, error.message || 'Invalid request', error.errors || []);
     }
-  }
+  };
 
-  async refreshToken(req: Request, res: Response) {
-    res.status(200).json({
-      status: 'success',
-      message: 'Token refresh endpoint',
-    });
-  }
+  verifyOtp = async (req: Request, res: Response) => {
+    try {
+      const { phone, otp } = verifyOtpSchema.parse(req.body);
+      const result = await this.authService.verifyOtp(phone, otp);
+      return ApiResponse.success(res, 'OTP verified successfully', result);
+    } catch (error: any) {
+      logger.error('Verify OTP error:', error);
+      return ApiResponse.error(res, error.message || 'Invalid credentials', error.errors || [], 401);
+    }
+  };
 
-  async logout(req: Request, res: Response) {
-    res.status(200).json({
-      status: 'success',
-      message: 'Logged out successfully',
-    });
-  }
+  refreshToken = async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = refreshTokenSchema.parse(req.body);
+      const result = await this.authService.refreshToken(refreshToken);
+      return ApiResponse.success(res, 'Token refreshed successfully', result);
+    } catch (error: any) {
+      logger.error('Refresh token error:', error);
+      return ApiResponse.error(res, error.message || 'Invalid token', error.errors || [], 401);
+    }
+  };
+
+  logout = async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.body;
+      if (refreshToken) {
+        await this.authService.logout(refreshToken);
+      }
+      return ApiResponse.success(res, 'Logged out successfully');
+    } catch (error: any) {
+      logger.error('Logout error:', error);
+      return ApiResponse.error(res, 'Logout failed', error.errors || [], 500);
+    }
+  };
 }

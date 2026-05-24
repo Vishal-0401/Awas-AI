@@ -98,11 +98,11 @@ class _OtpScreenState extends State<OtpScreen> {
                         contentPadding: EdgeInsets.zero,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                                                  borderSide: BorderSide(color: AppColors.primary!, width: 2),
+                                                  borderSide: BorderSide(color: AppColors.primary, width: 2),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                                                    borderSide: BorderSide(color: AppColors.primary!, width: 2),
+                                                    borderSide: BorderSide(color: AppColors.primary, width: 2),
                         ),
                       ),
                       onChanged: (value) {

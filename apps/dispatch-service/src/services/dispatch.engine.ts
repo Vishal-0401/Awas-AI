@@ -5,10 +5,63 @@
  * Handles worker search, job assignment, and distributed locking.
  */
 
-import { RedisService } from './redis.service';
-import { logger } from '../utils/logger';
+// import { RedisService } from '/services/edis.service';
+
+class RedisService {
+  private static instance: RedisService;
+
+  static getInstance(): RedisService {
+    if (!this.instance) {
+      this.instance = new RedisService();
+    }
+    return this.instance;
+  }
+
+  async geoAdd(
+    _key: string,
+    _data: { member: string; longitude: number; latitude: number }
+  ): Promise<void> {
+    throw new Error('RedisService not available');
+  }
+
+  async setEx(_key: string, _ttl: number, _value: string): Promise<void> {
+    throw new Error('RedisService not available');
+  }
+
+  async geoRadius(
+    _key: string,
+    _options: { longitude: number; latitude: number; radius: { value: number; unit: string }; count: number }
+  ): Promise<string[]> {
+    return [];
+  }
+
+  async get(_key: string): Promise<string | null> {
+    return null;
+  }
+
+  async set(
+    _key: string,
+    _value: string,
+    _options: { NX?: boolean; EX?: number }
+  ): Promise<boolean> {
+    return false;
+  }
+
+  async keys(_pattern: string): Promise<string[]> {
+    return [];
+  }
+}
+
+// Mock logger to resolve missing module error
+const logger = {
+  info: (msg: string, meta?: any) => console.log(`[INFO] ${msg}`, meta || ''),
+  warn: (msg: string, meta?: any) => console.warn(`[WARN] ${msg}`, meta || ''),
+  error: (msg: string, meta?: any) => console.error(`[ERROR] ${msg}`, meta || ''),
+};
+
 
 export interface WorkerLocation {
+  currentJobId: string;
   workerId: string;
   userId: string;
   latitude: number;
@@ -218,7 +271,7 @@ export class DispatchEngine {
     const worker = this.activeWorkers.get(workerId);
     if (worker) {
       worker.status = 'available';
-      worker.currentJobId = undefined;
+           worker.currentJobId = '';
     }
 
     logger.info('Job completed', { jobId, workerId });

@@ -1,26 +1,31 @@
-import { Request, Response } from 'express';
-import { prisma } from '../../server';
+import { Response } from 'express';
+import { WalletService } from './wallet.service';
+import { logger } from '../../common/helpers/logger';
+import { ApiResponse } from '../../common/helpers/response';
+import { AuthRequest } from '../../common/middleware/auth.middleware';
 
 export class WalletController {
-  async getWallet(req: Request, res: Response) {
-    const userId = req.user!.userId;
+  private walletService = new WalletService();
 
-    res.status(200).json({
-      status: 'success',
-      data: {
-        wallet: {
-          id: 'wallet-id',
-          balance: 0,
-          currency: 'USD',
-        },
-      },
-    });
-  }
+  getWallet = async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user!.userId;
+      const wallet = await this.walletService.getWallet(userId);
+      return ApiResponse.success(res, 'Wallet fetched successfully', wallet);
+    } catch (error: any) {
+      logger.error('Get wallet error:', error);
+      return ApiResponse.error(res, 'Failed to fetch wallet', [], 500);
+    }
+  };
 
-  async getTransactions(req: Request, res: Response) {
-    res.status(200).json({
-      status: 'success',
-      data: { transactions: [] },
-    });
-  }
+  getTransactions = async (req: AuthRequest, res: Response) => {
+    try {
+      const userId = req.user!.userId;
+      const transactions = await this.walletService.getTransactions(userId);
+      return ApiResponse.success(res, 'Transactions fetched successfully', transactions);
+    } catch (error: any) {
+      logger.error('Get transactions error:', error);
+      return ApiResponse.error(res, 'Failed to fetch transactions', [], 500);
+    }
+  };
 }

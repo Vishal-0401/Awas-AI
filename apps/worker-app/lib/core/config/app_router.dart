@@ -10,6 +10,7 @@ import '../../features/jobs/screens/worker_jobs_screen.dart';
 import '../../features/jobs/screens/job_detail_screen.dart';
 import '../../features/jobs/screens/active_job_screen.dart';
 import '../../features/jobs/screens/live_tracking_screen.dart';
+import '../../features/jobs/screens/worker_live_map_screen.dart';
 import '../../features/jobs/screens/complete_job_screen.dart';
 import '../../features/wallet/screens/wallet_screen.dart';
 import '../../features/wallet/screens/earnings_screen.dart';
@@ -64,6 +65,10 @@ class AppRouter {
       GoRoute(
         path: '/live-tracking',
         builder: (context, state) => const LiveTrackingScreen(),
+      ),
+      GoRoute(
+        path: '/live-map',
+        builder: (context, state) => const WorkerLiveMapScreen(),
       ),
       GoRoute(
         path: '/complete-job',

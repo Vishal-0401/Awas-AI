@@ -1,8 +1,8 @@
+import 'package:awas_customer_app/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-import '../../../core/config/app_theme.dart';
 
 class DiagnosticResultScreen extends StatelessWidget {
   const DiagnosticResultScreen({super.key});
@@ -214,7 +214,7 @@ class DiagnosticResultScreen extends StatelessWidget {
               width: double.infinity,
               child: TextButton(
                 onPressed: () => context.push('/ai-report'),
-                child: Text('View Full Technical Report', style: TextStyle(color: AppColors.textSecondary)),
+                child: const Text('View Full Technical Report', style: TextStyle(color: AppColors.textSecondary)),
               ),
             ).animate().fadeIn(delay: 1100.ms),
           ],
