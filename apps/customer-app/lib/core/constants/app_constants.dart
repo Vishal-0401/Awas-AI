@@ -1,7 +1,9 @@
 class AppConstants {
   // Networking
-  static const String apiBaseUrl = 'http://localhost:3000/api'; // Replace with production URL
-  static const String socketUrl = 'http://localhost:3000'; // Replace with production URL
+  static const String apiOrigin = 'https://awas-ai.onrender.com';
+  static const String apiBaseUrl = '$apiOrigin/api';
+  static const String apiV1BaseUrl = '$apiOrigin/api/v1';
+  static const String socketUrl = apiOrigin;
   
   // Storage Keys
   static const String tokenKey = 'auth_token';

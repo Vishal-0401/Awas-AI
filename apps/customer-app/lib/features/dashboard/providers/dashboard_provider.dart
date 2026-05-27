@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../core/models/api_response.dart';
 import '../../../core/services/api_client.dart';
+import '../../../core/constants/app_constants.dart';
 
 
 class DashboardData {
@@ -48,32 +49,37 @@ class DashboardNotifier extends StateNotifier<AsyncValue<DashboardData>> {
         localUser = jsonDecode(userJsonStr) as Map<String, dynamic>;
       }
 
-      const baseUrl = 'http://localhost:3000/api/v1';
+      const baseUrl = AppConstants.apiV1BaseUrl;
       const client = ApiClient(baseUrl: baseUrl);
 
-final results = await Future.wait([
-        client.getJson<Map<String, dynamic>>(
-          '/users/me',
+      ApiResponse<Map<String, dynamic>>? userApi;
+      ApiResponse<List<dynamic>>? historyApi;
+      ApiResponse<List<dynamic>>? trackingApi;
 
+      try {
+        userApi = await client.getJson<Map<String, dynamic>>(
+          '/users/me',
           dataParser: (json) => (json as Map).cast<String, dynamic>(),
           requiresAuth: true,
-        ).catchError((_) => null),
-        client.getJson<List<dynamic>>(
+        );
+      } catch (_) {}
+
+      try {
+        historyApi = await client.getJson<List<dynamic>>(
           '/ai/history',
           dataParser: (json) => json as List<dynamic>,
           requiresAuth: true,
-        ).catchError((_) => null),
-        client.getJson<List<dynamic>>(
+        );
+      } catch (_) {}
+
+      try {
+        trackingApi = await client.getJson<List<dynamic>>(
           '/tracking/nearby',
           query: {'lat': '12.9716', 'lng': '77.5946'},
           dataParser: (json) => json as List<dynamic>,
           requiresAuth: true,
-        ).catchError((_) => null),
-      ]);
-
-      final userApi = results[0] as ApiResponse<Map<String, dynamic>>?;
-      final historyApi = results[1] as ApiResponse<List<dynamic>>?;
-      final trackingApi = results[2] as ApiResponse<List<dynamic>>?;
+        );
+      } catch (_) {}
 
       // Merge local cached user JSON with remote if available
       final user = userApi?.data ??

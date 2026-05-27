@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/route_paths.dart';
 import '../providers/auth_provider.dart';
 
+enum LoginType { mobile, email }
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,64 +17,80 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isCreateAccount = false;
+
+  LoginType _loginType = LoginType.mobile;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  void _handlePhoneLogin() async {
-    if (_phoneController.text.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid 10-digit mobile number'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
+  Future<void> _handleContinue() async {
+    final value = _controller.text.trim();
+
+    if (_loginType == LoginType.mobile) {
+      if (value.length < 10) {
+        _showError('Enter valid mobile number');
+        return;
+      }
+    } else {
+      if (!value.contains('@')) {
+        _showError('Enter valid email');
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
-    
+
     try {
-      await ref.read(authProvider.notifier).sendOtp(_phoneController.text);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        context.push(RoutePaths.otp);
+      if (_loginType == LoginType.mobile) {
+        await ref.read(authProvider.notifier).sendOtp(value);
+      } else {
+        await ref.read(authProvider.notifier).sendEmailOtp(value);
       }
-    } catch (e) {
+
       if (mounted) {
         setState(() => _isLoading = false);
 
-        // Prefer clean message; ApiException.toString() may include extra info.
-        final msg = e is Exception ? e.toString() : 'Request failed';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: AppColors.error),
+        context.push(
+          RoutePaths.otp,
+          extra: {
+            "value": value,
+            "type": _loginType.name,
+          },
         );
       }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError(e.toString());
     }
-
   }
 
-  void _handleGoogleLogin() async {
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
+
+  Future<void> _handleGoogleLogin() async {
     setState(() => _isGoogleLoading = true);
+
     try {
       await ref.read(authProvider.notifier).loginWithGoogle();
-      // Navigation is handled by GoRouter's redirect based on authState
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
+      _showError(e.toString());
     }
+
+    setState(() => _isGoogleLoading = false);
   }
 
   @override
@@ -81,155 +99,234 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
-              
-              // Glowing Logo / Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                  boxShadow: [
-                    BoxShadow(
-                       color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 30,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.sensors_rounded,
-                  size: 40,
-                  color: AppColors.primary,
-                ),
-              ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, end: 0),
-              
-              const SizedBox(height: 40),
-              
-              Text(
-                'Welcome to\nAWAS Home',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  height: 1.2,
-                  color: Colors.white,
-                ),
-              ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
-              
-              const SizedBox(height: 12),
-              
-              Text(
-                'Enter your mobile number to continue securely.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.1, end: 0),
-              
-              const SizedBox(height: 48),
-              
-              // Mobile Number Input
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2),
-                  maxLength: 10,
-                  decoration: InputDecoration(
-                    counterText: '',
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('+91', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 8),
-                          Container(width: 1, height: 24, color: Colors.white24),
-                        ],
-                      ),
-                    ),
-                    hintText: '00000 00000',
-                    hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5), letterSpacing: 2),
+
+              const SizedBox(height: 50),
+
+              // Logo
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.4),
+                        blurRadius: 30,
+                      )
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_rounded,
+                    color: AppColors.primary,
+                    size: 45,
                   ),
                 ),
-              ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
-              
+              ).animate().fadeIn(),
+
               const SizedBox(height: 40),
-              
-              // Login Button
+
+              Text(
+                _isCreateAccount
+                    ? "Create\nAccount"
+                    : "Welcome\nBack",
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ).animate().fadeIn().slideX(),
+
+              const SizedBox(height: 12),
+
+              const Text(
+                "Login securely using mobile number or email OTP.",
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Toggle Mobile / Email
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _loginType = LoginType.mobile;
+                          _controller.clear();
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: _loginType == LoginType.mobile
+                              ? AppColors.primary
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Mobile OTP",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _loginType = LoginType.email;
+                          _controller.clear();
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: _loginType == LoginType.email
+                              ? AppColors.primary
+                              : AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Email OTP",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              // Input
+              TextField(
+                controller: _controller,
+                keyboardType: _loginType == LoginType.mobile
+                    ? TextInputType.phone
+                    : TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: _loginType == LoginType.mobile
+                      ? "Enter mobile number"
+                      : "Enter email address",
+                  prefixIcon: Icon(
+                    _loginType == LoginType.mobile
+                        ? Icons.phone_android
+                        : Icons.email_outlined,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 35),
+
+              // Continue Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading || _isGoogleLoading ? null : _handlePhoneLogin,
+                  onPressed:
+                      _isLoading || _isGoogleLoading ? null : _handleContinue,
                   child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
+                      ? const CircularProgressIndicator(
+                          color: Colors.white,
                         )
-                      : const Text('Continue'),
+                      : Text(
+                          _isCreateAccount
+                              ? "Create Account"
+                              : "Send OTP",
+                        ),
                 ),
-              ).animate().fadeIn(delay: 800.ms).scale(begin: const Offset(0.9, 0.9)),
-              
-              const SizedBox(height: 24),
-              
-              // Divider
-              const Row(
-                children: [
-                  Expanded(child: Divider(color: Colors.white24)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('OR', style: TextStyle(color: AppColors.textSecondary)),
-                  ),
-                  Expanded(child: Divider(color: Colors.white24)),
-                ],
-              ).animate().fadeIn(delay: 900.ms),
-              
-              const SizedBox(height: 24),
-              
-              // Google Login Button
+              ),
+
+              const SizedBox(height: 20),
+
+              // Google Login
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 55,
                 child: OutlinedButton.icon(
-                  onPressed: _isLoading || _isGoogleLoading ? null : _handleGoogleLogin,
-                  icon: _isGoogleLoading 
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.g_mobiledata_rounded, size: 32, color: Colors.white),
-                  label: const Text('Continue with Google', style: TextStyle(fontSize: 16, color: Colors.white)),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  onPressed: _handleGoogleLogin,
+                  icon: _isGoogleLoading
+                      ? const CircularProgressIndicator()
+                      : const Icon(
+                          Icons.g_mobiledata_rounded,
+                          size: 35,
+                          color: Colors.white,
+                        ),
+                  label: const Text(
+                    "Continue with Google",
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
-              ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
+              ),
 
-              const SizedBox(height: 32),
-              
-              // Terms & Conditions
+              const SizedBox(height: 25),
+
+              // Create account toggle
+              Center(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isCreateAccount = !_isCreateAccount;
+                    });
+                  },
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: _isCreateAccount
+                              ? "Already have account? "
+                              : "Don't have account? ",
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: "Create Account",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
               Center(
                 child: Text(
-                  'By continuing, you agree to our Terms & Privacy Policy',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                  "By continuing you agree to Terms & Privacy Policy",
+                  style: TextStyle(
+                    color: AppColors.textSecondary.withOpacity(0.7),
+                    fontSize: 12,
                   ),
                   textAlign: TextAlign.center,
                 ),
-              ).animate().fadeIn(delay: 1100.ms),
+              ),
             ],
           ),
         ),

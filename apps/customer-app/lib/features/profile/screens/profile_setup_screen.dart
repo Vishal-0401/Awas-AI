@@ -3,11 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/constants/app_colors.dart';
 
-class ProfileSetupScreen extends ConsumerWidget {
+class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
+}
+
+class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
+  final _nameController = TextEditingController();
+  final _addressController = TextEditingController();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -69,6 +85,7 @@ class ProfileSetupScreen extends ConsumerWidget {
               const SizedBox(height: 32),
               
               TextField(
+                controller: _nameController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Full Name',
@@ -84,6 +101,7 @@ class ProfileSetupScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               
               TextField(
+                controller: _addressController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Home Address',
@@ -103,8 +121,37 @@ class ProfileSetupScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    ref.read(authProvider.notifier).completeProfile();
+                  onPressed: _isSaving
+                      ? null
+                      : () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final name = _nameController.text.trim();
+                    final address = _addressController.text.trim();
+                    if (name.length < 2 || address.length < 3) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Enter your full name and home address'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                      return;
+                    }
+                    setState(() => _isSaving = true);
+                    try {
+                      await ref.read(authProvider.notifier).completeProfile(
+                            fullName: name,
+                            address: address,
+                          );
+                    } catch (e) {
+                      if (!mounted) return;
+                      setState(() => _isSaving = false);
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString()),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -112,8 +159,8 @@ class ProfileSetupScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Complete Profile',
+                  child: Text(
+                    _isSaving ? 'Saving...' : 'Complete Profile',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

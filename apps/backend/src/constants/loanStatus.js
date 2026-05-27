@@ -1,8 +1,0 @@
-module.exports = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  ACTIVE: 'ACTIVE',
-  CLOSED: 'CLOSED',
-  REJECTED: 'REJECTED',
-};
-

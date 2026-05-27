@@ -22,7 +22,7 @@ class AuthService {
     }
 
     final ApiResponse<Map<String, dynamic>> api = await apiClient.postJson(
-      'api/v1/auth/google',
+      '/api/v1/auth/google',
       body: {'idToken': idToken},
     );
 
@@ -33,6 +33,14 @@ class AuthService {
     await apiClient.postJson(
       '/api/v1/auth/send-otp',
       body: {'phone': phone},
+      dataParser: (json) => json as Map<String, dynamic>,
+    );
+  }
+
+  Future<void> sendEmailOtp(String email) async {
+    await apiClient.postJson(
+      '/api/v1/auth/send-otp',
+      body: {'email': email},
       dataParser: (json) => json as Map<String, dynamic>,
     );
   }
@@ -53,6 +61,40 @@ class AuthService {
       throw Exception('OTP verification failed');
     }
     return data;
+  }
+
+  Future<Map<String, dynamic>> verifyEmailOtp(String email, String otp) async {
+    final ApiResponse<Map<String, dynamic>> api = await apiClient.postJson(
+      '/api/v1/auth/verify-otp',
+      body: {
+        'email': email,
+        'otp': otp,
+      },
+    );
+
+    final data = api.data;
+    if (data == null) {
+      throw Exception('OTP verification failed');
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> completeProfile({
+    required String fullName,
+    required String address,
+    String? email,
+  }) async {
+    final ApiResponse<Map<String, dynamic>> api = await apiClient.postJson(
+      '/api/v1/users/me/complete-profile',
+      body: {
+        'fullName': fullName,
+        'address': address,
+        if (email != null) 'email': email,
+      },
+      requiresAuth: true,
+    );
+
+    return api.data ?? <String, dynamic>{};
   }
 }
 

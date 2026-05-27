@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../core/services/api_client.dart';
+import '../../../core/services/storage_service.dart';
+import '../../../core/constants/app_constants.dart';
 import '../services/auth_service.dart';
 
 enum AuthState {
@@ -21,10 +23,12 @@ enum AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
 
   final AuthService _authService =
-      AuthService(const ApiClient(baseUrl: 'http://localhost:3000'));
+      AuthService(const ApiClient(baseUrl: AppConstants.apiOrigin));
 
 
   String? pendingPhone;
+  String? pendingEmail;
+
 
   AuthNotifier() : super(AuthState.initial) {
     _checkAuthState();
@@ -67,14 +71,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
     pendingPhone = phone;
   }
 
+  Future<void> sendEmailOtp(String email) async {
+    await _authService.sendEmailOtp(email);
+    pendingEmail = email;
+  }
+
   Future<void> verifyOtp(String otp) async {
-    if (pendingPhone == null) {
+    if (pendingPhone == null && pendingEmail == null) {
       // No pending phone means the flow is broken; treat as a local validation failure.
       // Keep thrown error message clean and user-friendly.
       throw Exception('Please enter your mobile number first');
     }
 
-    final data = await _authService.verifyOtp(pendingPhone!, otp);
+    final data = pendingPhone != null
+        ? await _authService.verifyOtp(pendingPhone!, otp)
+        : await _authService.verifyEmailOtp(pendingEmail!, otp);
     await _handleLoginSuccess(data);
 
   }
@@ -92,6 +103,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // Store core tokens
     if (data['accessToken'] != null) {
       await box.put('accessToken', data['accessToken']);
+      await StorageService.instance.saveToken(data['accessToken'] as String);
     }
     if (data['refreshToken'] != null) {
       await box.put('refreshToken', data['refreshToken']);
@@ -112,8 +124,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> completeProfile() async {
+  Future<void> completeProfile({
+    String fullName = 'AWAS User',
+    String address = 'Home Address',
+    String? email,
+  }) async {
+    final user = await _authService.completeProfile(
+      fullName: fullName,
+      address: address,
+      email: email,
+    );
     final box = await Hive.openBox('authBox');
+    if (user.isNotEmpty) {
+      await box.put('userData', jsonEncode(user));
+    }
     await box.put('isProfileComplete', true);
     state = AuthState.authenticated;
   }
@@ -123,6 +147,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await box.delete('accessToken');
     await box.delete('refreshToken');
     await box.delete('userData');
+    await StorageService.instance.deleteToken();
     state = AuthState.onboardingCompleted; // Don't show onboarding again
   }
 }
